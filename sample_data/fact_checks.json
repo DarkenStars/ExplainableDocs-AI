@@ -1,0 +1,33 @@
+[
+    {
+      "claim": "COVID-19 vaccines contain microchips used for tracking people.",
+      "verdict": "False",
+      "explanation": "There is no evidence that COVID-19 vaccines contain microchips or any tracking devices. Vaccine ingredients are publicly documented and regulated.",
+      "source": "https://www.who.int/news-room/feature-stories/detail/debunked-covid-19-vaccine-microchip-rumour"
+    },
+    {
+      "claim": "The Earth revolves around the Sun once every 365 days.",
+      "verdict": "True",
+      "explanation": "Scientific consensus confirms that the Earth completes one revolution around the Sun in approximately 365.25 days.",
+      "source": "https://solarsystem.nasa.gov/planets/earth/overview/"
+    },
+    {
+      "claim": "Drinking bleach can cure COVID-19.",
+      "verdict": "False",
+      "explanation": "Ingesting bleach or disinfectants is extremely dangerous and provides no medical benefit for COVID-19 or any other illness.",
+      "source": "https://www.cdc.gov/coronavirus/2019-ncov/faq.html"
+    },
+    {
+      "claim": "5G mobile networks spread the coronavirus.",
+      "verdict": "False",
+      "explanation": "Viruses, including SARS-CoV-2, cannot travel on radio waves or mobile networks. COVID-19 spreads mainly through respiratory droplets.",
+      "source": "https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public/myth-busters"
+    },
+    {
+      "claim": "Coffee consumption may reduce the risk of type 2 diabetes.",
+      "verdict": "Uncertain",
+      "explanation": "Some studies suggest a correlation between moderate coffee intake and lower risk of type 2 diabetes, but evidence is not conclusive.",
+      "source": "https://www.hsph.harvard.edu/nutritionsource/food-features/coffee/"
+    }
+  ]
+  
