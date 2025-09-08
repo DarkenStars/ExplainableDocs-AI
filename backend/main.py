@@ -1,4 +1,3 @@
-# main.py
 import os
 import re
 import json
@@ -7,7 +6,7 @@ import psycopg2
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-# Import the ML logic from our new file
+# Import the ml_models.py in this file
 from ml_models import select_evidence_from_urls
 
 # =========================
@@ -25,11 +24,9 @@ DB_PORT = os.environ.get("DB_PORT")
 
 # =========================
 # DB helpers, Retrieval, Heuristic Analysis
-# (These functions remain here as they are part of the core app logic)
 # =========================
 
 def setup_database():
-    # (code is unchanged)
     try:
         conn = psycopg2.connect(
             dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD,
@@ -55,11 +52,9 @@ def setup_database():
         return None
 
 def normalize_claim(text: str) -> str:
-    # (code is unchanged)
     return " ".join((text or "").split()).lower()
 
 def check_cache(conn, claim_norm):
-    # (code is unchanged)
     if not conn: return None
     try:
         with conn.cursor() as cur:
@@ -75,7 +70,6 @@ def check_cache(conn, claim_norm):
     return None
 
 def upsert_result(conn, claim_norm, verdict, source_link, explanation=None, evidence_json=None):
-    # (code is unchanged)
     if not conn: return
     try:
         with conn.cursor() as cur:
@@ -91,13 +85,12 @@ def upsert_result(conn, claim_norm, verdict, source_link, explanation=None, evid
                 json.dumps(evidence_json) if evidence_json is not None else None
             ))
             conn.commit()
-            print("💾 Cached (UPSERT).")
+            print("Cached in the database")
     except Exception as e:
         print(f"Store error: {e}")
         conn.rollback()
 
 def search_claim(query):
-    # (code is unchanged)
     if not API_KEY: return {"error": "Configuration Error: Please set API_KEY."}
     if not SEARCH_ENGINE_ID: return {"error": "Configuration Error: Please set SEARCH_ENGINE_ID."}
     url = "https://www.googleapis.com/customsearch/v1"
@@ -110,7 +103,6 @@ def search_claim(query):
         return {"error": f"Search API error: {e}"}
 
 def analyze_verdicts(search_results):
-    # (code is unchanged)
     # This heuristic analysis is fast and part of the main logic flow
     if not search_results:
         return {"best_verdict": "Uncertain", "percentages": {"Likely True": 0, "Likely False": 0, "Uncertain": 100}}
@@ -134,13 +126,11 @@ def analyze_verdicts(search_results):
     else: best = "Mixed / Uncertain"
     return {"best_verdict": best, "percentages": {"Likely True": s_pct, "Likely False": f_pct}}
 
-
 # =========================
 # Explanation, Fusion, and Main CLI
 # =========================
 
 def build_explanation(claim: str, entailing, contradicting):
-    # (code is unchanged)
     if not entailing and not contradicting:
         return (f"**Claim:** {claim}\n\nI checked the retrieved sources but didn’t find strong sentence-level support or refutation.")
     if len(entailing) >= 2 and len(entailing) >= (len(contradicting) + 1): trend = "Overall, the strongest snippets **support** the claim."
@@ -160,12 +150,10 @@ def build_explanation(claim: str, entailing, contradicting):
 
 
 def simple_fuse_verdict(heuristic_best_verdict: str, entailing, contradicting) -> str:
-    # (code is unchanged)
     e, c = len(entailing), len(contradicting)
     if e >= 2 and e >= c + 1: return "Likely True"
     if c >= 2 and c >= e + 1: return "Likely False"
     return heuristic_best_verdict
-
 
 def main():
     print("--- Fact Checker (Retrieval + Heuristic + Slim NLI + Fusion) ---")

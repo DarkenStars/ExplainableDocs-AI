@@ -6,8 +6,7 @@ from sentence_transformers import SentenceTransformer, util
 from transformers import pipeline
 
 # --- Configuration ---
-# You can move the tunables here as they are specific to the ML logic
-MAX_URLS = 3
+MAX_URLS = 10 # Changed this to 10 for maximum analysis
 PER_URL_CANDIDATES = 8
 ENTAIL_THRESHOLD = 0.72
 CONTRA_THRESHOLD = 0.72
@@ -27,7 +26,6 @@ except Exception as e:
     print(f"ERROR: Could not load models. Please check your internet connection and libraries. Details: {e}")
     _EMBEDDER = None
     _NLI = None
-
 
 # --- Helper Functions ---
 def _fetch_clean(url: str, timeout=12) -> str:
@@ -60,7 +58,6 @@ def _batch_nli(claim: str, candidates):
     for sent, pred in zip(candidates, out):
         res.append({"sentence": sent, "label": pred["label"].upper(), "score": float(pred["score"])})
     return res
-
 
 # --- Main NLI Explainer Function ---
 def select_evidence_from_urls(claim: str, urls):
