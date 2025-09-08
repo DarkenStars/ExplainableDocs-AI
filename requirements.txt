@@ -1,0 +1,20 @@
+# For loading environment variables from .env file
+python-dotenv
+
+# For making HTTP requests to Google Search API and fetching web pages
+requests
+
+# PostgreSQL database adapter for Python
+psycopg2-binary
+
+# For extracting main text content from web pages
+trafilatura
+
+# For sentence similarity ML model (MiniLM)
+sentence-transformers
+
+# For Natural Language Inference (NLI) ML model (BART)
+transformers
+
+# Core deep learning framework required by transformers and sentence-transformers
+torch
