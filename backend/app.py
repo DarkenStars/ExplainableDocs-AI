@@ -166,7 +166,7 @@ def search_claim(query: str, num: int = 10):
     num = max(1, min(int(num or 10), 10))  # Google CSE max per call = 10
 
     url = "https://www.googleapis.com/customsearch/v1"
-    params = {"key": API_KEY, "cx": SEARCH_ENGINE_ID, "q": query, "num": num}
+    params = {"key": API_KEY, "cx": SEARCH_ENGINE_ID, "q": query, "num": 10}
     try:
         resp = requests.get(url, params=params, timeout=12)
         resp.raise_for_status()
