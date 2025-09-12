@@ -55,8 +55,7 @@
           </div>
 
           <MessageBubble
-            v-if="activeConversation"
-            v-for="message in activeConversation.messages"
+            v-for="message in activeConversation?.messages || []"
             :key="message.id"
             :message="message"
             class="animate-message-in"

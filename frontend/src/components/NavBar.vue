@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <header class="navbar" :class="{ scrolled: isScrolled }">
     <div class="navbar-content">
       <router-link to="/" class="logo">
@@ -100,5 +100,129 @@ body.dark-theme .navbar.scrolled {
 .nav-actions {
   display: flex;
   align-items: center;
+}
+</style> -->
+
+<template>
+  <header class="navbar" :class="{ scrolled: isScrolled }">
+    <div class="navbar-content">
+      <router-link to="#" class="logo" @click="scrollToTop">
+        News Advisor AI
+      </router-link>
+      
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#about">About</a>
+        <a href="https://wa.me/1234567890?text=Hi" target="_blank">WhatsApp</a>
+        <a href="https://t.me/NewsAdvisorAIBot" target="_blank">Telegram</a>
+      </nav>
+      
+      <div class="nav-actions">
+        <button @click="themeStore.toggleTheme" class="btn-icon" aria-label="Toggle Dark Mode">
+          <svg v-if="!themeStore.isDark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <router-link to="/chat" class="btn btn-primary">
+          Get Started
+        </router-link>
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useThemeStore } from '../stores/theme.js';
+
+const themeStore = useThemeStore();
+const isScrolled = ref(false);
+
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 20;
+};
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll);
+});
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
+</script>
+
+<style scoped>
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: transparent;
+  padding: 1.5rem 5%;
+  transition: background-color 0.3s ease, border-bottom 0.3s ease;
+}
+.navbar.scrolled {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border);
+}
+body.dark-theme .navbar.scrolled {
+    background: rgba(26, 26, 26, 0.8);
+}
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.logo {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  align-items: center;
+}
+.nav-links a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+.nav-links a:hover {
+  color: var(--color-text-primary);
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.btn-icon:hover {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
 }
 </style>
