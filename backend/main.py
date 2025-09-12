@@ -1,3 +1,4 @@
+# main.py
 import os
 import re
 import json
@@ -5,15 +6,12 @@ import requests
 import psycopg2
 from dotenv import load_dotenv
 from urllib.parse import urlparse
-
-# Import the ml_models.py in this file
 from ml_models import select_evidence_from_urls
+from text_polisher import polish_text 
 
-# =========================
-# Config
-# =========================
+
+# Config and other functions...
 load_dotenv()
-
 API_KEY = os.environ.get("API_KEY")
 SEARCH_ENGINE_ID = os.environ.get("SEARCH_ENGINE_ID")
 DB_NAME = os.environ.get("DB_NAME")
@@ -21,10 +19,6 @@ DB_USER = os.environ.get("DB_USER")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_HOST = os.environ.get("DB_HOST")
 DB_PORT = os.environ.get("DB_PORT")
-
-# =========================
-# DB helpers, Retrieval, Heuristic Analysis
-# =========================
 
 def setup_database():
     try:
@@ -85,7 +79,7 @@ def upsert_result(conn, claim_norm, verdict, source_link, explanation=None, evid
                 json.dumps(evidence_json) if evidence_json is not None else None
             ))
             conn.commit()
-            print("Cached in the database")
+            print("Cached (UPSERT).")
     except Exception as e:
         print(f"Store error: {e}")
         conn.rollback()
@@ -94,7 +88,7 @@ def search_claim(query):
     if not API_KEY: return {"error": "Configuration Error: Please set API_KEY."}
     if not SEARCH_ENGINE_ID: return {"error": "Configuration Error: Please set SEARCH_ENGINE_ID."}
     url = "https://www.googleapis.com/customsearch/v1"
-    params = {"key": API_KEY, "cx": SEARCH_ENGINE_ID, "q": query, "num": 10}
+    params = {"key": API_KEY, "cx": SEARCH_ENGINE_ID, "q": query, "num": 5}
     try:
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
@@ -103,7 +97,6 @@ def search_claim(query):
         return {"error": f"Search API error: {e}"}
 
 def analyze_verdicts(search_results):
-    # This heuristic analysis is fast and part of the main logic flow
     if not search_results:
         return {"best_verdict": "Uncertain", "percentages": {"Likely True": 0, "Likely False": 0, "Uncertain": 100}}
     supporting_keywords = {'confirmed': 3, 'true': 3, 'accurate': 3, 'verified': 3, 'fact': 2, 'correct': 2, 'supported': 1, 'evidence': 1}
@@ -126,28 +119,45 @@ def analyze_verdicts(search_results):
     else: best = "Mixed / Uncertain"
     return {"best_verdict": best, "percentages": {"Likely True": s_pct, "Likely False": f_pct}}
 
-# =========================
-# Explanation, Fusion, and Main CLI
-# =========================
-
 def build_explanation(claim: str, entailing, contradicting):
+    """
+    Builds a more detailed, factual explanation from multiple pieces of evidence.
+    This provides a rich input for the text polisher.
+    """
+    # No strong evidence found either way.
     if not entailing and not contradicting:
-        return (f"**Claim:** {claim}\n\nI checked the retrieved sources but didn’t find strong sentence-level support or refutation.")
-    if len(entailing) >= 2 and len(entailing) >= (len(contradicting) + 1): trend = "Overall, the strongest snippets **support** the claim."
-    elif len(contradicting) >= 2 and len(contradicting) >= (len(entailing) + 1): trend = "Overall, the strongest snippets **refute** the claim."
-    else: trend = "Overall, the evidence is **mixed/uncertain**."
-    lines = [f"**Claim:** {claim}", "", "**Evidence (top snippets):**"]
-    for i, rec in enumerate(entailing[:3], 1):
-        host = urlparse(rec["url"]).netloc
-        snip = rec["sentence"].strip()[:257] + "..." if len(rec["sentence"].strip()) > 260 else rec["sentence"].strip()
-        lines.append(f"- [E{i}] {snip}\n  ↪ Source: {host} — {rec['url']}")
-    for i, rec in enumerate(contradicting[:2], 1):
-        host = urlparse(rec["url"]).netloc
-        snip = rec["sentence"].strip()[:257] + "..." if len(rec["sentence"].strip()) > 260 else rec["sentence"].strip()
-        lines.append(f"- [C{i}] {snip}\n  ↪ Source: {host} — {rec['url']}")
-    lines += ["", trend]
-    return "\n".join(lines)
+        return f"After a review of top sources, no strong sentence-level evidence was found to either support or refute the claim that '{claim}'."
 
+    # Evidence is strongly refuting.
+    if len(contradicting) >= 2 and len(contradicting) >= len(entailing) + 1:
+        trend = f"evidence strongly suggests the claim that '{claim}' is false"
+        # Combine the top 2-3 refuting snippets into one string.
+        evidence_snippets = [f"\"{ev['sentence']}\"" for ev in contradicting[:3]]
+        all_evidence_text = " ".join(evidence_snippets)
+        return f"Regarding the claim, the {trend}. For example, key sources state that {all_evidence_text}"
+        
+    # Evidence is strongly supporting.
+    elif len(entailing) >= 2 and len(entailing) >= len(contradicting) + 1:
+        trend = f"the evidence tends to support the claim that '{claim}'"
+        # Combine the top 2-3 supporting snippets into one string.
+        evidence_snippets = [f"\"{ev['sentence']}\"" for ev in entailing[:3]]
+        all_evidence_text = " ".join(evidence_snippets)
+        return f"In reference to the claim, {trend}. For instance, relevant sources mention that {all_evidence_text}"
+    
+    # Evidence is mixed or inconclusive. Show both sides.
+    else:
+        # Get the top supporting and refuting snippets, if they exist.
+        top_support = f"\"{entailing[0]['sentence']}\"" if entailing else ""
+        top_refute = f"\"{contradicting[0]['sentence']}\"" if contradicting else ""
+
+        if top_support and top_refute:
+            return f"The evidence regarding '{claim}' is mixed. For example, one source supports it by stating {top_support}, while another refutes it, mentioning {top_refute}."
+        elif top_support: 
+             return f"The evidence regarding '{claim}' is inconclusive but leans supportive, with one source stating {top_support}."
+        elif top_refute: 
+             return f"The evidence regarding '{claim}' is inconclusive but leans negative, with one source mentioning {top_refute}."
+        else:
+             return f"The evidence regarding the claim '{claim}' is inconclusive based on a review of the top online sources."
 
 def simple_fuse_verdict(heuristic_best_verdict: str, entailing, contradicting) -> str:
     e, c = len(entailing), len(contradicting)
@@ -156,7 +166,7 @@ def simple_fuse_verdict(heuristic_best_verdict: str, entailing, contradicting) -
     return heuristic_best_verdict
 
 def main():
-    print("--- Fact Checker (Retrieval + Heuristic + Slim NLI + Fusion) ---")
+    print("--- Fact Checker (with Text Polishing) ---")
     db = setup_database()
     if not db:
         print("Exiting due to DB failure.")
@@ -198,8 +208,8 @@ def main():
             print(f"{heuristic['best_verdict']}  |  Confidence: {heuristic['percentages']}")
             print("-------------------------")
 
-            print("\n🔬 Performing deep analysis on sources...")
-            links = [it.get("link") for it in results[:5] if it.get("link")]
+            print("\nPerforming deep analysis on sources...")
+            links = [it.get("link") for it in results[:10] if it.get("link")]
             entailing, contradicting = select_evidence_from_urls(raw, links)
 
             final_verdict = simple_fuse_verdict(heuristic["best_verdict"], entailing, contradicting)
@@ -207,13 +217,21 @@ def main():
             print(final_verdict)
             print("=====================")
 
-            explanation = build_explanation(raw, entailing, contradicting)
-            print("\n--- Explanation ---\n" + explanation)
+            # Build the structured explanation
+            structured_explanation = build_explanation(raw, entailing, contradicting)
+            
+            # Polish the text to make it sound more natural
+            print("\nPolishing language...")
+            polished_explanation = polish_text(structured_explanation)
+
+            print("\n--- Explanation ---")
+            print(polished_explanation)
             print("-------------------")
             
+            # Store the single, polished explanation in the database
             top_link = results[0].get("link") if results else "No link found."
             evidence_payload = {"entailing": entailing, "contradicting": contradicting, "heuristic": heuristic}
-            upsert_result(db, claim_norm, final_verdict, top_link, explanation=explanation, evidence_json=evidence_payload)
+            upsert_result(db, claim_norm, final_verdict, top_link, explanation=polished_explanation, evidence_json=evidence_payload)
 
     finally:
         if db:

@@ -1,4 +1,3 @@
-# ml_models.py
 import re
 import requests
 import trafilatura
@@ -6,7 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 from transformers import pipeline
 
 # --- Configuration ---
-MAX_URLS = 10 # Changed this to 10 for maximum analysis
+MAX_URLS = 5
 PER_URL_CANDIDATES = 8
 ENTAIL_THRESHOLD = 0.72
 CONTRA_THRESHOLD = 0.72
@@ -15,8 +14,7 @@ MAX_CONTRA = 2
 
 _UA = {"User-Agent": "Mozilla/5.0 (FactCheckerFusion)"}
 
-# --- Model Loading (Global) ---
-# This ensures models are loaded only once when the module is imported.
+# --- Model Loading ---
 print("Loading ML models... (This may take a moment on first run)")
 try:
     _EMBEDDER = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -26,6 +24,7 @@ except Exception as e:
     print(f"ERROR: Could not load models. Please check your internet connection and libraries. Details: {e}")
     _EMBEDDER = None
     _NLI = None
+
 
 # --- Helper Functions ---
 def _fetch_clean(url: str, timeout=12) -> str:
@@ -59,11 +58,11 @@ def _batch_nli(claim: str, candidates):
         res.append({"sentence": sent, "label": pred["label"].upper(), "score": float(pred["score"])})
     return res
 
+
 # --- Main NLI Explainer Function ---
 def select_evidence_from_urls(claim: str, urls):
     """
     Main function to extract and classify evidence from a list of URLs.
-    This is the primary function you'll import into your main script.
     """
     if not _EMBEDDER or not _NLI:
         print("Cannot select evidence because ML models are not loaded.")
