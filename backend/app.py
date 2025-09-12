@@ -36,12 +36,11 @@ DB_PORT = os.environ.get("DB_PORT", "5432")
 
 POOL: Optional[SimpleConnectionPool] = None  # DB pool (initialized on startup)
 
-
 # FastAPI
 app = FastAPI(title="News Advisor AI Fact Checker", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # tighten in production
+    allow_origins=["*"],   
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -73,8 +72,8 @@ class VerifyResponse(BaseModel):
     verdict: Literal["true", "false", "uncertain"]
     confidence: int
     explanation: str
-    sources: List[Source]          # ALL sources with stance & evidence lines
-    evidence: EvidenceBundle       # Flat lists grouped by side
+    sources: List[Source]          
+    evidence: EvidenceBundle       
     processing_time: float
 
 # DB helpers
@@ -173,40 +172,58 @@ def search_claim(query: str, num: int = 10):
         return {"results": resp.json().get("items", [])}
     except Exception as e:
         return {"error": f"Search API error: {e}"}
-
+    
 def analyze_verdicts(search_results):
     if not search_results:
-        return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0, "uncertain": 100}}
+        # If no results, verdict is uncertain with very low confidence
+        return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0}, "confidence": 20}
+
     supporting_keywords = {
-        'confirmed': 3, 'true': 3, 'accurate': 3, 'verified': 3,
-        'fact': 2, 'correct': 2, 'supported': 1, 'evidence': 1
+        'confirmed': 3, 'true': 3, 'accurate': 3, 'verified': 3, 'fact': 2, 
+        'correct': 2, 'supported': 1, 'evidence': 1
     }
     refuting_keywords = {
-        'hoax': 3, 'false': 3, 'debunked': 3, 'myth': 3,
-        'conspiracy': 2, 'incorrect': 2, 'misleading': 2,
-        'unproven': 1, 'baseless': 1, 'scam': 2
+        'hoax': 3, 'false': 3, 'debunked': 3, 'myth': 3, 'conspiracy': 2, 
+        'incorrect': 2, 'misleading': 2, 'unproven': 1, 'baseless': 1, 'scam': 2
     }
+    
     support_score = refute_score = 0
     for item in search_results:
         text = f"{item.get('title','')} {item.get('snippet','')}".lower()
         for k, w in supporting_keywords.items():
-            if k in text:
-                support_score += w
+            if k in text: support_score += w
         for k, w in refuting_keywords.items():
-            if k in text:
-                refute_score += w
-    total = support_score + refute_score
-    if total == 0:
-        return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0, "uncertain": 100}}
-    s_pct = round((support_score / total) * 100)
-    f_pct = round((refute_score / total) * 100)
+            if k in text: refute_score += w
+
+    total_score = support_score + refute_score
+    
+    if total_score == 0:
+        # If no keywords found, verdict is uncertain with low confidence
+        return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0}, "confidence": 30}
+    
+    # Confidence is based on how much one side "wins" by
+    margin = abs(support_score - refute_score) / total_score
+    # Scale the confidence: base of 50%, with the margin adding up to 45% more.
+    confidence = int(50 + (margin * 45))
+
+    # Determine Best Verdict
     if refute_score > support_score * 1.5:
         best = "false"
     elif support_score > refute_score * 1.5:
         best = "true"
     else:
         best = "uncertain"
-    return {"best_verdict": best, "percentages": {"true": s_pct, "false": f_pct}}
+        # If verdict is uncertain, lower the confidence score
+        confidence = min(confidence, 65)
+
+    s_pct = round((support_score / total_score) * 100)
+    f_pct = round((refute_score / total_score) * 100)
+
+    return {
+        "best_verdict": best, 
+        "percentages": {"true": s_pct, "false": f_pct},
+        "confidence": confidence  
+    }
 
 def build_explanation(claim, entailing, contradicting):
     if not entailing and not contradicting:
@@ -261,7 +278,6 @@ def on_shutdown():
     if POOL:
         POOL.closeall()
         POOL = None
-
 
 # Routes
 @app.get("/health")
@@ -335,12 +351,12 @@ def verify_claim(payload: VerifyRequest):
             polished_explanation = structured_explanation
 
         # Confidence
-        confidence = 75
-        if final_verdict in ["true", "false"]:
-            confidence = 90
-        if len(entailing) >= 2 or len(contradicting) >= 2:
-            confidence = min(95, confidence + 10)
+        # Confidence is calculated from the heuristic and boosted by NLI
+        confidence = heuristic.get('confidence', 50) # Start with the heuristic confidence
 
+        # Add a bonus if the deep analysis finds strong evidence
+        if len(entailing) >= 2 or len(contradicting) >= 2:
+            confidence = min(95, confidence + 15)
         # Per-URL evidence buckets
         def _ev_url(ev):
             return ev.get("url") or ev.get("source") or ev.get("link")

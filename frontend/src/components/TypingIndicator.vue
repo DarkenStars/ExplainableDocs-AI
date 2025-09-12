@@ -24,7 +24,8 @@ export default {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--primary-purple);
+  /* FIXED: Using a color variable that exists in the new main.css */
+  background: var(--color-text-secondary); 
   animation: typing 1.4s infinite ease-in-out;
 }
 

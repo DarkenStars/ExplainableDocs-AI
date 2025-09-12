@@ -1,207 +1,229 @@
 <template>
   <div class="landing-page">
-    <!-- Abstract Background -->
-    <div class="abstract-background">
-      <div class="abstract-shape"></div>
-      <div class="abstract-shape"></div>
-      <div class="abstract-shape"></div>
-      <div class="abstract-shape"></div>
-      <div class="abstract-shape"></div>
-    </div>
-
-    <!-- Navigation -->
     <NavBar />
 
-    <!-- Hero Section -->
-    <section class="hero fade-in">
+    <section class="hero">
       <div class="hero-content">
-        <div class="hero-text">
-          <h1>Combat Misinformation with AI-Powered Fact Checking</h1>
-          <p>
-            Our advanced AI system analyzes claims, verifies facts, and provides 
-            evidence-based verdicts to help you distinguish truth from misinformation 
-            in real-time.
-          </p>
-          <div class="hero-buttons">
-            <router-link to="/chat" class="btn btn-primary">
-              Start Fact Checking →
-            </router-link>
-            <button @click="scrollToFeatures" class="btn btn-secondary">
-              ▶️ Watch Demo
-            </button>
-          </div>
+        <h1 class="hero-headline">Clarity in a world of noise.</h1>
+        <p class="hero-subheadline">
+          Our advanced AI system analyzes claims, verifies facts, and provides 
+          evidence-based verdicts to help you distinguish truth from misinformation in real-time.
+        </p>
+        <div class="hero-buttons">
+          <router-link to="/chat" class="btn btn-primary">
+            Start Fact-Checking
+          </router-link>
+          <button @click="scrollToFeatures" class="btn btn-secondary">
+            Learn More
+          </button>
         </div>
-        
-        <div class="hero-demo">
-          <div class="demo-container glass-card">
+      </div>
+    </section>
+
+    <section class="demo-section">
+        <div class="demo-container">
             <div class="demo-header">
-              <div class="demo-dots">
-                <div class="demo-dot"></div>
-                <div class="demo-dot"></div>
-                <div class="demo-dot"></div>
-              </div>
+                <div class="demo-dots">
+                    <div class="demo-dot"></div>
+                    <div class="demo-dot"></div>
+                    <div class="demo-dot"></div>
+                </div>
             </div>
             <div class="demo-content">
-              <div class="demo-message user bounce-in">
-                "Vaccines contain microchips for tracking"
-              </div>
-              <div class="demo-message ai slide-in">
-                <div class="verdict-badge verdict-false">FALSE</div>
-                <div class="confidence-badge confidence-high">95% Confident</div>
-                <p style="margin-top: 1rem; opacity: 0.9;">
-                  No credible evidence supports this claim. Multiple health organizations 
-                  have verified vaccine safety.
-                </p>
-                <div style="margin-top: 1rem;">
-                  <small style="opacity: 0.7;">
-                    🔗 Sources: WHO, CDC, Reuters
-                  </small>
+                <div class="demo-message user">
+                    "Vaccines contain microchips for tracking"
                 </div>
-              </div>
+                <div class="demo-message ai">
+                    <div class="verdict-false">VERDICT: FALSE</div>
+                    <p>No credible evidence supports this claim. Multiple health organizations have verified vaccine safety. Sources include the WHO and CDC.</p>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </section>
 
-    <!-- Features Section -->
     <section id="features" class="features">
       <div class="container">
-        <h2 class="section-title">Powerful Features</h2>
+        <h2 class="section-title">Powerful, transparent, and easy to use.</h2>
         <div class="features-grid">
-          <div class="feature-card glass-card fade-in">
-            <div class="feature-icon" style="background: var(--gradient-primary);">
-              🔍
-            </div>
+          <div class="feature-card">
             <h3>AI-Powered Analysis</h3>
-            <p>Advanced NLP models analyze claims against verified databases from trusted sources worldwide</p>
+            <p>Advanced models analyze claims against verified databases from trusted sources worldwide.</p>
           </div>
-          
-          <div class="feature-card glass-card fade-in">
-            <div class="feature-icon" style="background: var(--gradient-secondary);">
-              🛡️
-            </div>
+          <div class="feature-card">
             <h3>Real-time Verification</h3>
-            <p>Get instant fact-check results with detailed confidence scores and evidence explanations</p>
+            <p>Get instant fact-check results with detailed confidence scores and clear explanations.</p>
           </div>
-          
-          <div class="feature-card glass-card fade-in">
-            <div class="feature-icon" style="background: var(--gradient-warm);">
-              🖼️
-            </div>
-            <h3>Image Analysis</h3>
-            <p>Upload images for authenticity verification and detect manipulated visual content</p>
-          </div>
-          
-          <div class="feature-card glass-card fade-in">
-            <div class="feature-icon" style="background: var(--gradient-danger);">
-              🔗
-            </div>
+          <div class="feature-card">
             <h3>Credible Sources</h3>
-            <p>Evidence linked to trusted organizations: WHO, CDC, Snopes, PolitiFact, and more</p>
-          </div>
-          
-          <div class="feature-card glass-card fade-in">
-            <div class="feature-icon" style="background: linear-gradient(135deg, var(--primary-pink) 0%, var(--primary-purple) 100%);">
-              💬
-            </div>
-            <h3>Chat Interface</h3>
-            <p>Natural conversation flow with persistent history and intelligent context understanding</p>
-          </div>
-          
-          <div class="feature-card glass-card fade-in">
-            <div class="feature-icon" style="background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--primary-blue) 100%);">
-              📱
-            </div>
-            <h3>Multi-Platform</h3>
-            <p>Access via web, WhatsApp bot, or Telegram bot for seamless fact-checking anywhere</p>
+            <p>Evidence is always linked to trusted organizations like WHO, CDC, Snopes, PolitiFact, and more.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="cta-section">
       <div class="container">
-        <div class="cta-card glass-card">
-          <h2>Ready to Fight Misinformation?</h2>
-          <p>Join thousands of users who trust News Advisor AI for accurate, evidence-based fact-checking</p>
-          <router-link to="/chat" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;">
-            ⚡ Start Your First Fact Check
-          </router-link>
-          
-          <div class="stats-row" style="margin-top: 2rem; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
-            <div class="stat-item">
-              <div class="stat-number gradient-text">10K+</div>
-              <div class="stat-label">Claims Verified</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number gradient-text">95%</div>
-              <div class="stat-label">Accuracy Rate</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number gradient-text">&lt;3s</div>
-              <div class="stat-label">Response Time</div>
-            </div>
-          </div>
-        </div>
+        <h2>Ready to find clarity?</h2>
+        <p>Join thousands of users who trust News Advisor AI for accurate, evidence-based fact-checking.</p>
+        <router-link to="/chat" class="btn btn-primary">
+          Start Your First Fact-Check
+        </router-link>
       </div>
     </section>
   </div>
 </template>
 
-<script>
-import NavBar from '../components/NavBar.vue'
+<script setup>
+import NavBar from '../components/NavBar.vue';
 
-export default {
-  name: 'LandingPage',
-  components: {
-    NavBar
-  },
-  setup() {
-    const scrollToFeatures = () => {
-      document.getElementById('features')?.scrollIntoView({ 
-        behavior: 'smooth' 
-      })
-    }
-    
-    return {
-      scrollToFeatures
-    }
-  }
-}
+const scrollToFeatures = () => {
+  document.getElementById('features')?.scrollIntoView({ 
+    behavior: 'smooth' 
+  });
+};
 </script>
 
 <style scoped>
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+.landing-page {
+  padding-top: 80px; /* Space for the fixed navbar */
 }
 
-.stat-item {
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+}
+
+.hero-content {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+.hero-headline {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.hero-subheadline {
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Demo Section */
+.demo-section {
+  padding: 2rem;
+}
+.demo-container {
+  max-width: 700px;
+  margin: 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  background: var(--color-background);
+}
+body.dark-theme .demo-container {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.demo-header {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.demo-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+.demo-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-subtle);
+}
+.demo-content {
+  padding: 1.5rem;
+  font-size: 0.95rem;
+}
+.demo-message {
+  margin-bottom: 1rem;
+}
+.demo-message.user {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+.demo-message.ai {
+  color: var(--color-text-secondary);
+}
+.verdict-false {
+  font-weight: 600;
+  color: #D92D20;
+  margin-bottom: 0.5rem;
+}
+
+/* Features Section */
+.features {
+  padding: 6rem 2rem;
+  background: var(--color-surface);
   text-align: center;
 }
 
-.stat-number {
-  font-size: 2rem;
-  font-weight: 800;
-  line-height: 1;
+.section-title {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.stat-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: left;
 }
 
+.feature-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  color: var(--color-text-secondary);
+}
+
+/* CTA Section */
+.cta-section {
+  text-align: center;
+  padding: 6rem 2rem;
+}
+
+.cta-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.cta-section p {
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .stats-row {
-    gap: 1rem !important;
-  }
-  
-  .stat-number {
-    font-size: 1.5rem;
-  }
+  .hero-headline { font-size: 2.5rem; }
+  .section-title { font-size: 2rem; }
+  .cta-section h2 { font-size: 2rem; }
 }
 </style>

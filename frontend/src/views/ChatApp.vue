@@ -288,6 +288,9 @@ onMounted(() => {
   cursor: pointer; padding: 0.75rem 1rem; font-weight: 500;
   border-radius: 0.5rem; margin-bottom: 0.25rem;
   color: var(--color-text-body); transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .conversation-item:hover { background-color: var(--color-accent-light); color: var(--color-accent); }
 .conversation-item.active { background-color: var(--color-accent); color: var(--color-text-on-accent); }
