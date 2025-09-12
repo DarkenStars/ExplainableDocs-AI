@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 from transformers import pipeline
 
 # --- Configuration ---
-MAX_URLS = 5
+MAX_URLS = 10
 PER_URL_CANDIDATES = 8
 ENTAIL_THRESHOLD = 0.72
 CONTRA_THRESHOLD = 0.72

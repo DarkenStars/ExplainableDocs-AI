@@ -3,16 +3,16 @@
     <aside :class="['sidebar', { open: sidebarOpen }]">
       <div class="sidebar-content">
         <h3 class="sidebar-title">Conversations</h3>
-        <button @click="newChat" class="new-chat-btn">
+        <button @click="handleNewChat" class="new-chat-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           New Chat
         </button>
         <nav class="conversation-list">
           <div
-            v-for="conversation in conversations"
+            v-for="conversation in chatStore.conversations"
             :key="conversation.id"
-            :class="['conversation-item', { active: conversation.id === activeConversation }]"
-            @click="selectConversation(conversation.id)"
+            :class="['conversation-item', { active: conversation.id === chatStore.activeConversationId }]"
+            @click="handleSelectConversation(conversation.id)"
           >
             {{ conversation.title }}
           </div>
@@ -36,7 +36,7 @@
 
       <section class="chat-messages" ref="messagesContainer">
         <div class="chat-thread">
-          <div v-if="messages.length === 0" class="welcome-message">
+          <div v-if="!activeConversation || activeConversation.messages.length === 0" class="welcome-message">
             <div class="welcome-card animate-pop-in">
               <div class="welcome-icon">👋</div>
               <h2>Welcome!</h2>
@@ -55,13 +55,13 @@
           </div>
 
           <MessageBubble
-            v-for="message in messages"
+            v-for="message in activeConversation?.messages || []"
             :key="message.id"
             :message="message"
             class="animate-message-in"
           />
 
-          <div v-if="isTyping" class="message-bubble ai animate-message-in">
+          <div v-if="chatStore.loading" class="message-bubble ai animate-message-in">
             <div class="message-content"><TypingIndicator /></div>
           </div>
         </div>
@@ -78,9 +78,7 @@
 
           <textarea
             v-model="newMessage"
-            @keydown.enter.exact.prevent
-            @keyup.enter.exact="sendMessage"
-            @keydown.enter.shift.exact="addNewLine"
+            @keypress.enter.exact.prevent="handleSendMessage"
             class="chat-input-field"
             placeholder="Ask a question or paste a claim..."
             rows="1"
@@ -89,9 +87,9 @@
             aria-label="Chat input"
           ></textarea>
           <button
-            @click="sendMessage"
+            @click="handleSendMessage"
             class="send-button"
-            :disabled="(!newMessage.trim() && !selectedFile) || isTyping"
+            :disabled="!newMessage.trim() || chatStore.loading"
             title="Send Message"
             aria-label="Send Message"
           >
@@ -107,220 +105,117 @@
   </div>
 </template>
 
-<script>
-import { ref, onMounted, nextTick } from 'vue'
-import { useChatStore } from '../stores/chat' 
-import MessageBubble from '../components/MessageBubble.vue'
-import TypingIndicator from '../components/TypingIndicator.vue'
+<script setup>
+import { ref, onMounted, nextTick, computed, watch } from 'vue';
+import { useChatStore } from '../stores/chat.js';
+import MessageBubble from '../components/MessageBubble.vue';
+import TypingIndicator from '../components/TypingIndicator.vue';
 
-export default {
-  name: 'ChatApp',
-  components: { MessageBubble, TypingIndicator },
-  setup() {
-    const chatStore = useChatStore()
-    const sidebarOpen = ref(true)
-    const newMessage = ref('')
-    const selectedFile = ref(null)
-    const isTyping = ref(false)
-    const messagesContainer = ref(null)
-    const textareaRef = ref(null)
-    const fileInput = ref(null)
+// Initialize the store
+const chatStore = useChatStore();
 
-    const messages = ref([])
-    const conversations = ref([
-      { id: 1, title: 'Vaccine Safety Discussion', timestamp: new Date(Date.now() - 3600000) },
-      { id: 2, title: 'Climate Change Facts', timestamp: new Date(Date.now() - 7200000) }
-    ])
-    const activeConversation = ref(null)
-    const quickExamples = ['Do vaccines cause autism?', 'Is climate change real?', '5G health risks']
+// Component-specific state (UI only)
+const sidebarOpen = ref(true);
+const newMessage = ref('');
+const selectedFile = ref(null);
 
-    const toggleSidebar = () => { 
-      sidebarOpen.value = !sidebarOpen.value 
-    }
+// Template refs
+const messagesContainer = ref(null);
+const textareaRef = ref(null);
+const fileInput = ref(null);
 
-    const newChat = () => { 
-      messages.value = []
-      activeConversation.value = null
-    }
+/**
+ * **FIXED**: Use a computed property to get the active conversation reactively.
+ * This ensures the view always shows the correct chat's messages.
+ */
+const activeConversation = computed(() => chatStore.getActiveConversation);
 
-    const selectConversation = (id) => { 
-      activeConversation.value = id
-      loadConversationMessages(id)
-    }
+/**
+ * **FIXED**: Use the new getter from the store for dynamic examples.
+ */
+const quickExamples = computed(() => chatStore.recentUserMessages);
 
-    const loadConversationMessages = (id) => {
-      if (id === 1) {
-        messages.value = [
-          { 
-            id: 1, 
-            type: 'user', 
-            content: 'Do vaccines cause autism?', 
-            timestamp: new Date(Date.now() - 3600000) 
-          }, 
-          { 
-            id: 2, 
-            type: 'ai', 
-            content: '', 
-            factCheck: { 
-              verdict: 'false', 
-              confidence: 95, 
-              explanation: 'Extensive scientific research has consistently shown no link between vaccines and autism...', 
-              sources: [
-                { id: 1, title: 'CDC - Vaccine Safety', url: '#', organization: 'CDC' }, 
-                { id: 2, title: 'WHO - Vaccines and Autism', url: '#', organization: 'WHO' }
-              ], 
-              processing_time: 2.1 
-            }, 
-            timestamp: new Date(Date.now() - 3590000) 
-          }
-        ]
-      } else { 
-        messages.value = []
-      }
-    }
 
-    const triggerFileInput = () => {
-      fileInput.value?.click()
-    }
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value;
+};
 
-    const handleFileSelect = (event) => {
-      const file = event.target.files[0]
-      if (file) {
-        const fileData = {
-          file: file,
-          preview: URL.createObjectURL(file) 
-        }
-        handleFileUpload(fileData)
-      }
-    }
+/**
+ * **FIXED**: This now correctly calls the store action to create a new chat thread.
+ */
+const handleNewChat = () => {
+  chatStore.newChat();
+};
 
-    const handleFileUpload = (fileData) => {
-      selectedFile.value = fileData
-    }
+/**
+ * **FIXED**: This now correctly calls the store action to switch conversations.
+ */
+const handleSelectConversation = (id) => {
+  chatStore.selectConversation(id);
+};
 
-    const removeFile = () => {
-      if(fileInput.value) {
-        fileInput.value.value = ''
-      }
-      selectedFile.value = null
-    }
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
 
-    const addNewLine = () => {
-      newMessage.value += '\n'
-    }
-
-    const sendMessage = async () => {
-      console.log('📤 Send Message Called') // Debug log
-      
-      if ((!newMessage.value.trim() && !selectedFile.value) || isTyping.value) {
-        console.log('❌ Message validation failed')
-        return
-      }
-
-      const userMessage = { 
-        id: Date.now(), 
-        type: 'user', 
-        content: newMessage.value.trim(), 
-        image: selectedFile.value?.preview, 
-        timestamp: new Date() 
-      }
-      messages.value.push(userMessage)
-
-      const messageContent = newMessage.value.trim()
-      const file = selectedFile.value
-      
-      console.log('💬 Sending message:', messageContent) // Debug log
-      
-      newMessage.value = ''
-      removeFile()
-      autoGrow()
-
-      await nextTick()
-      scrollToBottom()
-
-      isTyping.value = true
-      try {
-        console.log('🔄 Calling chatStore.sendMessage...') // Debug log
-        const aiResponse = await chatStore.sendMessage(messageContent, file?.file)
-        console.log('✅ AI Response received:', aiResponse) // Debug log
-        
-        messages.value.push({ 
-          id: Date.now() + 1, 
-          type: 'ai', 
-          content: '', 
-          factCheck: aiResponse, 
-          timestamp: new Date() 
-        })
-      } catch (error) {
-        console.error('💥 Send Message Error:', error) // Enhanced error log
-        messages.value.push({ 
-          id: Date.now() + 1, 
-          type: 'ai', 
-          content: 'Sorry, I encountered an error. Please try again.', 
-          timestamp: new Date() 
-        })
-      } finally {
-        isTyping.value = false
-        await nextTick()
-        scrollToBottom()
-      }
-    }
-
-    const sendExampleMessage = (example) => { 
-      newMessage.value = example
-      sendMessage() 
-    }
-
-    const scrollToBottom = () => { 
-      if (messagesContainer.value) { 
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight 
-      }
-    }
-
-    const autoGrow = () => { 
-      if (textareaRef.value) { 
-        textareaRef.value.style.height = 'auto'
-        textareaRef.value.style.height = textareaRef.value.scrollHeight + 'px' 
-      }
-    }
-
-    const formatTime = (date) => new Intl.DateTimeFormat('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }).format(new Date(date))
-
-    onMounted(() => { 
-      console.log('🚀 ChatApp mounted')
-      newChat() 
-    })
-
-    return { 
-      sidebarOpen, 
-      newMessage, 
-      selectedFile, 
-      isTyping, 
-      messagesContainer, 
-      textareaRef, 
-      messages, 
-      conversations, 
-      activeConversation, 
-      quickExamples, 
-      toggleSidebar, 
-      newChat, 
-      selectConversation, 
-      handleFileUpload, 
-      removeFile, 
-      sendMessage, 
-      sendExampleMessage, 
-      triggerFileInput, 
-      fileInput, 
-      handleFileSelect, 
-      formatTime, 
-      autoGrow, 
-      addNewLine
-    }
+const handleFileSelect = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFile.value = file;
   }
-}
+};
+
+// Function to automatically scroll to the bottom of the chat
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
+};
+
+// Watch for new messages in the active chat and scroll down
+watch(() => activeConversation.value?.messages, scrollToBottom, { deep: true });
+
+const autoGrow = () => { 
+  if (textareaRef.value) { 
+    textareaRef.value.style.height = 'auto';
+    textareaRef.value.style.height = textareaRef.value.scrollHeight + 'px';
+  }
+};
+
+const handleSendMessage = async () => {
+  const messageContent = newMessage.value.trim();
+  if (!messageContent || chatStore.loading) return;
+
+  // If no chat is active, create one before sending
+  if (!chatStore.activeConversationId) {
+    chatStore.newChat();
+    await nextTick();
+  }
+
+  const fileToSend = selectedFile.value;
+  
+  // Reset input fields
+  newMessage.value = '';
+  selectedFile.value = null;
+  if (fileInput.value) fileInput.value.value = '';
+  autoGrow();
+
+  await chatStore.sendMessage(messageContent, fileToSend);
+};
+
+const sendExampleMessage = (example) => {
+  newMessage.value = example;
+  handleSendMessage();
+};
+
+onMounted(() => {
+  // If no chats exist after loading, create a new one to start
+  if (chatStore.conversations.length === 0) {
+    chatStore.newChat();
+  }
+});
 </script>
 
 <style scoped>
@@ -392,6 +287,9 @@ export default {
   cursor: pointer; padding: 0.75rem 1rem; font-weight: 500;
   border-radius: 0.5rem; margin-bottom: 0.25rem;
   color: var(--color-text-body); transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .conversation-item:hover { background-color: var(--color-accent-light); color: var(--color-accent); }
 .conversation-item.active { background-color: var(--color-accent); color: var(--color-text-on-accent); }

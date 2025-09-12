@@ -1,121 +1,132 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import mockApi from '../services/mockApi'
-import axios from 'axios'
-
-const USE_REAL_BACKEND = true // Toggle this when ready
-
-const api = axios.create({
-  baseURL: 'http://localhost:5000',
-  timeout: 30000
-})
+import { defineStore } from 'pinia';
+import { ref, watch, computed } from 'vue';
+// FIXED: The import path now includes the .js extension for full clarity.
+import api from '@/services/api.js'; 
 
 export const useChatStore = defineStore('chat', () => {
-  const conversations = ref([])
-  const currentMessages = ref([])
-  const loading = ref(false)
-  
-  const sendMessage = async (message, image = null) => {
-    loading.value = true
-    
-    try {
-      if (!USE_REAL_BACKEND) {
-        console.log('🎭 Using mock API...')
-        return await mockApi.factCheck(message, image)
+  // --- STATE ---
+  const conversations = ref([]);
+  const activeConversationId = ref(null);
+  const loading = ref(false);
+
+  // --- GETTERS ---
+  const getActiveConversation = computed(() => {
+    if (!activeConversationId.value) return null;
+    return conversations.value.find(c => c.id === activeConversationId.value);
+  });
+
+  const recentUserMessages = computed(() => {
+    const userMessages = new Set();
+    for (let i = conversations.value.length - 1; i >= 0; i--) {
+      const conv = conversations.value[i];
+      for (let j = conv.messages.length - 1; j >= 0; j--) {
+        const msg = conv.messages[j];
+        if (msg.type === 'user' && msg.content.trim()) {
+          userMessages.add(msg.content.trim());
+        }
+        if (userMessages.size >= 3) {
+          return Array.from(userMessages);
+        }
       }
-      
-      console.log('🔄 Using real Python backend...')
-      const response = await api.post('/verify', {
-        message: message,
-        image: image ? 'uploaded' : null
-      })
-      
-      return response.data
-      
-    } catch (error) {
-      console.error('API Error:', error)
-      
-      if (!USE_REAL_BACKEND) {
-        throw error
-      }
-      
-      // Fallback to mock if real backend fails
-      if (error.code === 'ECONNREFUSED') {
-        console.log('⚠ Backend unavailable, using mock...')
-        return await mockApi.factCheck(message, image)
-      }
-      
-      // Fixed: Use backticks for template literal
-      throw new Error(`Server error (${error.response?.status}): ${error.response?.data?.error || error.response?.statusText}`);
-      
-    } finally {
-      loading.value = false
     }
-  }
-  
-  const saveConversation = (title, messages) => {
-    const conversation = {
-      id: Date.now(),
-      title: title || 'New Conversation',
-      messages,
-      timestamp: new Date()
-    }
-    
-    conversations.value.unshift(conversation)
-    localStorage.setItem('conversations', JSON.stringify(conversations.value))
-  }
-  
+    return userMessages.size > 0 ? Array.from(userMessages) : [
+      'Is this image altered?', 'Fact-check: election fraud', '5G health risks'
+    ];
+  });
+
+  // --- ACTIONS ---
   const loadConversations = () => {
-    const saved = localStorage.getItem('conversations')
+    const saved = localStorage.getItem('conversations');
     if (saved) {
-      conversations.value = JSON.parse(saved)
+      conversations.value = JSON.parse(saved);
+      if (!activeConversationId.value && conversations.value.length > 0) {
+        activeConversationId.value = conversations.value[0].id;
+      }
     }
-  }
-  
-  const getConversations = () => {
-    return conversations.value
-  }
-  
-  const clearHistory = () => {
-    conversations.value = []
-    currentMessages.value = []
-    localStorage.removeItem('conversations')
-  }
-  
-  const deleteConversation = (conversationId) => {
-    conversations.value = conversations.value.filter(conv => conv.id !== conversationId)
-    localStorage.setItem('conversations', JSON.stringify(conversations.value))
-  }
-  
-  const updateConversation = (conversationId, updates) => {
-    const index = conversations.value.findIndex(conv => conv.id === conversationId)
-    if (index !== -1) {
-      conversations.value[index] = { ...conversations.value[index], ...updates }
-      localStorage.setItem('conversations', JSON.stringify(conversations.value))
+  };
+
+  const newChat = () => {
+    const newConversation = {
+      id: Date.now(),
+      title: 'New Chat',
+      messages: [],
+      timestamp: new Date(),
+    };
+    conversations.value.unshift(newConversation);
+    activeConversationId.value = newConversation.id;
+  };
+
+  const selectConversation = (id) => {
+    activeConversationId.value = id;
+  };
+
+  const sendMessage = async (message, image = null) => {
+    if (!getActiveConversation.value) {
+      newChat();
     }
-  }
-  
-  const getConversationById = (conversationId) => {
-    return conversations.value.find(conv => conv.id === conversationId)
-  }
-  
-  // Initialize conversations on store creation
-  const initializeStore = () => {
-    loadConversations()
-  }
-  
+    const conversation = getActiveConversation.value;
+
+    const userMessage = {
+      id: Date.now(),
+      type: 'user',
+      content: message,
+      image: image ? URL.createObjectURL(image) : null,
+      timestamp: new Date(),
+    };
+    conversation.messages.push(userMessage);
+
+    if (conversation.messages.length === 1 && message.trim()) {
+      conversation.title = message.length > 30 ? `${message.substring(0, 27)}...` : message;
+    }
+
+    loading.value = true;
+    try {
+      const responseData = await api.verifyClaim(message);
+      
+      const aiMessage = {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: '',
+        factCheck: responseData,
+        timestamp: new Date(),
+      };
+      conversation.messages.push(aiMessage);
+
+    } catch (error) {
+      console.error('API Error:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: `Sorry, an error occurred: ${error.message}`,
+        factCheck: null,
+        timestamp: new Date(),
+      };
+      conversation.messages.push(errorMessage);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // --- PERSISTENCE ---
+  watch(
+    conversations,
+    (newConversations) => {
+      localStorage.setItem('conversations', JSON.stringify(newConversations));
+    },
+    { deep: true }
+  );
+
+  // --- INITIALIZATION ---
+  loadConversations();
+
   return {
     conversations,
-    currentMessages,
+    activeConversationId,
     loading,
+    getActiveConversation,
+    recentUserMessages,
+    newChat,
+    selectConversation,
     sendMessage,
-    saveConversation,
-    loadConversations,
-    getConversations,
-    clearHistory,
-    deleteConversation,
-    updateConversation,
-    getConversationById,
-    initializeStore
-  }
-})
+  };
+});
