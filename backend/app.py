@@ -40,14 +40,22 @@ POOL: Optional[SimpleConnectionPool] = None  # DB pool (initialized on startup)
 
 # FastAPI
 app = FastAPI(title="News Advisor AI Fact Checker", version="2.0.0")
+
+origins = [
+    "https://<your-vercel-project>.vercel.app", # deployed frontend            
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://your-project.vercel.app"],  # your prod URL
-    allow_origin_regex=r"https://.*\.vercel\.app",      # preview deploys
-    allow_credentials=True,
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True, 
 )
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # Schemas
 class VerifyRequest(BaseModel):
@@ -178,7 +186,12 @@ def search_claim(query: str, num: int = 10):
 
 def analyze_verdicts(search_results):
     if not search_results:
-        return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0, "uncertain": 100}}
+        return {
+            "best_verdict": "uncertain",
+            "percentages": {"true": 0, "false": 0, "uncertain": 100},
+        }
+
+    # --- Keyword weights (tweak as you like) ---
     supporting_keywords = {
         'confirmed': 3, 'true': 3, 'accurate': 3, 'verified': 3,
         'fact': 2, 'correct': 2, 'supported': 1, 'evidence': 1
@@ -188,27 +201,91 @@ def analyze_verdicts(search_results):
         'conspiracy': 2, 'incorrect': 2, 'misleading': 2,
         'unproven': 1, 'baseless': 1, 'scam': 2
     }
-    support_score = refute_score = 0
+    # Emotionally charged / sensational terms
+    emotional_keywords = {
+        'shocking': 2, 'cover up': 3, 'cover-up': 3, 'miracle': 2,
+        'bombshell': 3, 'scandal': 2, 'outrage': 2, 'exposed': 2,
+        'secret': 1, 'hidden': 1, 'jaw-dropping': 2, 'unbelievable': 2,
+        'mind-blowing': 2, 'witch hunt': 2, 'smoking gun': 3,
+        'rigged': 2, 'censored': 2, 'panic': 2, 'crisis': 2,
+        'disaster': 2, 'catastrophe': 3, 'emergency': 1,
+        'urgent': 1, 'massive': 1, 'huge': 1, 'viral': 1, 'breakthrough': 1
+    }
+
+    support_score = 0
+    refute_score = 0
+    emotion_score = 0
+    emotion_hits = {}
+
     for item in search_results:
         text = f"{item.get('title','')} {item.get('snippet','')}".lower()
+        norm = text.replace('-', ' ')  # catch "cover-up" vs "cover up"
+
         for k, w in supporting_keywords.items():
-            if k in text:
+            if k in norm:
                 support_score += w
         for k, w in refuting_keywords.items():
-            if k in text:
+            if k in norm:
                 refute_score += w
+        for k, w in emotional_keywords.items():
+            # check both hyphenated and spaced variants (already normalized once)
+            if k in norm:
+                emotion_score += w
+                emotion_hits[k] = emotion_hits.get(k, 0) + 1
+
     total = support_score + refute_score
+
+    # No evidence-based signals: purely uncertain
     if total == 0:
-        return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0, "uncertain": 100}}
+        penalty = min(40, emotion_score * 5)  # still show sensationalism effect
+        return {
+            "best_verdict": "uncertain",
+            "percentages": {"true": 0, "false": 0, "uncertain": 100},
+            "emotional": {
+                "score": emotion_score,
+                "penalty_pct": penalty,
+                "hits": emotion_hits
+            },
+        }
+
+    # Baseline percentages from evidence signals
     s_pct = round((support_score / total) * 100)
-    f_pct = round((refute_score / total) * 100)
+    f_pct = 100 - s_pct  # ensure they sum to 100 pre-penalty
+
+    # Sensational language penalty: siphon confidence into 'uncertain'
+    # Up to 40% of certainty can be diverted based on intensity.
+    penalty = min(40, emotion_score * 5)  # each point ~5%, capped at 40%
+    scale = (100 - penalty) / 100.0
+    s_adj = round(s_pct * scale)
+    f_adj = round(f_pct * scale)
+
+    # Fix rounding so that true+false+uncertain == 100
+    uncertain_pct = 100 - s_adj - f_adj
+
+    # Verdict decision (original rule), but strong sensationalism forces 'uncertain'
     if refute_score > support_score * 1.5:
         best = "false"
     elif support_score > refute_score * 1.5:
         best = "true"
     else:
         best = "uncertain"
-    return {"best_verdict": best, "percentages": {"true": s_pct, "false": f_pct}}
+
+    if penalty >= 25:  # heavy sensationalism -> downgrade to uncertain
+        best = "uncertain"
+
+    return {
+        "best_verdict": best,
+        "percentages": {
+            "true": s_adj,
+            "false": f_adj,
+            "uncertain": uncertain_pct
+        },
+        "emotional": {
+            "score": emotion_score,
+            "penalty_pct": penalty,
+            "hits": emotion_hits
+        },
+    }
 
 def build_explanation(claim, entailing, contradicting):
     if not entailing and not contradicting:
