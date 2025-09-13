@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 from ml_models import select_evidence_from_urls
 from text_polisher import polish_text 
 
-
 # Config and other functions...
 load_dotenv()
 API_KEY = os.environ.get("API_KEY")

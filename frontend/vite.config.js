@@ -14,7 +14,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',  // Your Python backend
+        target: 'http://localhost:8000',  // Your Python backend
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       }
