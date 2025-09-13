@@ -5,7 +5,7 @@ from collections import defaultdict
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -22,6 +22,8 @@ from psycopg2.extras import Json
 
 from ml_models import select_evidence_from_urls
 from text_polisher import polish_text
+
+from fastapi.middleware.cors import CORSMiddleware
 
 # Config & Globals
 load_dotenv()
@@ -41,7 +43,8 @@ POOL: Optional[SimpleConnectionPool] = None  # DB pool (initialized on startup)
 app = FastAPI(title="News Advisor AI Fact Checker", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # tighten in production
+    allow_origins=["https://your-project.vercel.app"],  # your prod URL
+    allow_origin_regex=r"https://.*\.vercel\.app",      # preview deploys
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
