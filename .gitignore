@@ -2,3 +2,4 @@
 /backend/.env
 /backend/__pycache__
 /old_code
+/frontend/.env.local
