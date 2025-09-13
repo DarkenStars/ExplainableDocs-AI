@@ -176,4 +176,86 @@ body.dark-theme .demo-card {
   .hero-headline { font-size: 2.5rem; }
   .section-title, .cta-section h2 { font-size: 2rem; }
 }
+
+/* Extra responsive tweaks */
+@media (max-width: 1024px) {
+  .hero-headline {
+    font-size: 2.8rem;
+  }
+  .hero-subheadline {
+    font-size: 1.1rem;
+  }
+  .hero-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .sliding-track {
+    animation: slide 40s linear infinite; /* faster on smaller screens */
+  }
+  .demo-card {
+    width: 250px;
+    margin: 0 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-page {
+    padding-top: 70px;
+  }
+  .hero {
+    padding: 4rem 1.5rem 3rem;
+  }
+  .hero-headline {
+    font-size: 2rem;
+    line-height: 1.3;
+  }
+  .hero-subheadline {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .hero-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .sliding-track {
+    width: calc(260px * 10);
+  }
+  .demo-card {
+    width: 220px;
+    padding: 1rem;
+  }
+  .section-title, 
+  .cta-section h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 3rem 1rem 2rem;
+  }
+  .hero-headline {
+    font-size: 1.6rem;
+  }
+  .hero-subheadline {
+    font-size: 0.9rem;
+  }
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .hero-buttons .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .features-grid {
+    grid-template-columns: 1fr; /* stack features */
+    gap: 1.5rem;
+  }
+  .demo-card {
+    width: 180px;
+    margin: 0 10px;
+  }
+}
+
 </style>

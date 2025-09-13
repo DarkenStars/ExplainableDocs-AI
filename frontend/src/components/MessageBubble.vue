@@ -129,8 +129,15 @@ export default {
 <style scoped>
 /* Main bubble layout */
 .message-bubble {
+  --gradient-bluish: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  --color-text-on-accent: #FFFFFF;
+  --color-border: #DEE2E6;
+  --color-text-body: #343A40;
+  --border-radius: 0.75rem;
+  --color-text-light: #6C757D;
+
   max-width: 80%;
-  margin-bottom: 0.25rem; /* Reduced margin */
+  margin-bottom: 0.25rem;
   display: flex;
   flex-direction: column;
   font-size: 1rem;
@@ -140,21 +147,20 @@ export default {
 }
 .message-bubble.user {
   margin-left: auto;
-  align-items: flex-end; /* Align timestamp to the right */
+  align-items: flex-end;
 }
 .message-bubble.ai {
   margin-right: auto;
-  align-items: flex-start; /* Align timestamp to the left */
+  align-items: flex-start;
 }
 
-/* Content container styling */
 .message-content {
   padding: 0.75rem 1.125rem;
   border-radius: var(--border-radius);
   user-select: text;
 }
 .message-bubble.user > .message-content {
-  background: var(--gradient-bluish); /* NEW: Gradient background for user bubbles */
+  background: var(--gradient-bluish);
   color: var(--color-text-on-accent);
 }
 .message-bubble.ai > .message-content {
@@ -163,11 +169,10 @@ export default {
   color: var(--color-text-body);
 }
 
-/* User-uploaded image styling */
 .message-image {
   margin-top: 0.75rem;
   background-color: rgba(0,0,0,0.1);
-  border-radius: calc(var(--border-radius) - 4px); /* Slightly smaller radius */
+  border-radius: calc(var(--border-radius) - 4px);
 }
 .uploaded-image {
   max-width: 100%;
@@ -177,10 +182,9 @@ export default {
   object-fit: cover;
 }
 .user-message p {
-  margin: 0; /* Remove default paragraph margin */
+  margin: 0;
 }
 
-/* Timestamp styling */
 .message-timestamp {
   font-size: 0.75rem;
   color: var(--color-text-light);
