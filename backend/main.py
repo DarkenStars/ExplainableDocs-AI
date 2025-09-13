@@ -1,4 +1,3 @@
-# main.py
 import os
 import re
 import json
@@ -8,7 +7,6 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 from ml_models import select_evidence_from_urls
 from text_polisher import polish_text 
-
 
 # Config and other functions...
 load_dotenv()
@@ -88,7 +86,7 @@ def search_claim(query):
     if not API_KEY: return {"error": "Configuration Error: Please set API_KEY."}
     if not SEARCH_ENGINE_ID: return {"error": "Configuration Error: Please set SEARCH_ENGINE_ID."}
     url = "https://www.googleapis.com/customsearch/v1"
-    params = {"key": API_KEY, "cx": SEARCH_ENGINE_ID, "q": query, "num": 5}
+    params = {"key": API_KEY, "cx": SEARCH_ENGINE_ID, "q": query, "num": 10}
     try:
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()

@@ -1,4 +1,3 @@
-# polisher.py
 from transformers import pipeline, AutoTokenizer
 from transformers.utils import logging as hf_logging
 
@@ -11,7 +10,7 @@ try:
     _POLISHER = pipeline(
         "summarization",
         model=MODEL_NAME,
-        # If you have a GPU and torch cuda is available, uncomment:
+        # If you have a GPU and torch cuda is available
         device_map="auto"
     )
     _TOKENIZER = AutoTokenizer.from_pretrained(MODEL_NAME)

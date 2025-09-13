@@ -1,4 +1,3 @@
-# bot_tele.py
 import os
 from typing import List, Dict, Any
 
@@ -14,7 +13,6 @@ from telegram.ext import (
     filters,
 )
 
-# Load .env once
 load_dotenv(find_dotenv())
 
 def resolve_verify_url() -> str:

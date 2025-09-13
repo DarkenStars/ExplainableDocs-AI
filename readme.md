@@ -120,17 +120,6 @@ The system follows a modular, data-driven architecture that combines web scrapin
 
 ---
 
-## Contributors
-
-This project is developed by a passionate team dedicated to combating misinformation:
-
-- [**Saksham Pahariya**](https://github.com/sakshampahariya)
-- [**Mehul Batham**](https://github.com/github2002-cpu)
-- [**Yathartha Jain**](https://github.com/whiteshadowcoder)
-- [**Vasant Kumar Mogia**](https://github.com/DSCmatter)
-
----
-
 ### Installation Guide
 
 ### Backend Setup
@@ -210,19 +199,26 @@ This project is developed by a passionate team dedicated to combating misinforma
     
     Access at `http://localhost:5173` (or as shown).
     
-5. **Build for Production**:
-    
+5. **Run Telegram Bot**
+
     ```bash
-    npm run build
-    
+    python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload
     ```
-    
-6. **Lint Code**:
-    
+
     ```bash
-    npm run lint
-    
+    python .\bot_tele.py
     ```
+
+6. Frontend is available [`at`](https://newsadvisorai.vercel.app/)
+---
+
+## Contributors
+
+- [**Saksham Pahariya**](https://github.com/sakshampahariya)
+- [**Mehul Batham**](https://github.com/github2002-cpu)
+- [**Yathartha Jain**](https://github.com/whiteshadowcoder)
+- [**Vasant Kumar Mogia**](https://github.com/DSCmatter)
+
 ---
 
 ### License

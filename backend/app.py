@@ -38,7 +38,6 @@ DB_PORT = os.environ.get("DB_PORT", "5432")
 
 POOL: Optional[SimpleConnectionPool] = None  # DB pool (initialized on startup)
 
-
 # FastAPI
 app = FastAPI(title="News Advisor AI Fact Checker", version="2.0.0")
 app.add_middleware(
