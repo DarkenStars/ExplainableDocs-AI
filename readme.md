@@ -230,7 +230,7 @@ Set-Location backend
 Start-Process powershell -ArgumentList "python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload"
 python .\bot_tele.py
 ```
-```
+
 ---
 
 ### License
