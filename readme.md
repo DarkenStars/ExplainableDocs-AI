@@ -139,7 +139,9 @@ The system follows a modular, data-driven architecture that combines web scrapin
     
 3. **Install Dependencies**:
     
-    ```bash
+    ```
+    .venv\Scripts\Activate.ps1
+
     pip install -r requirements.txt
     
     ```
