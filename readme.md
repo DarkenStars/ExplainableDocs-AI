@@ -120,6 +120,13 @@ The system follows a modular, data-driven architecture that combines web scrapin
 
 ---
 
+## Contributors 
+
+- [**Saksham Pahariya**](https://github.com/sakshampahariya) - Frontend main, Deployment
+- [**Mehul Batham**](https://github.com/github2002-cpu) - Frontend, UI/UX, Docs
+- [**Yathartha Jain**](https://github.com/whiteshadowcoder) - Backend, ML
+- [**Vasant Kumar Mogia**](https://github.com/DSCmatter) - Backend, ML, Debugger(pain af)
+
 ### Installation Guide
 
 ### Backend Setup
