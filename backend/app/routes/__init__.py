@@ -1,0 +1,1 @@
+"""API routes for the fact-checker application."""

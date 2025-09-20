@@ -1,6 +1,12 @@
 # For loading environment variables from .env file
 python-dotenv
 
+# FastAPI web framework for API endpoints
+fastapi
+
+# ASGI server for FastAPI
+uvicorn
+
 # For making HTTP requests to Google Search API and fetching web pages
 requests
 
