@@ -13,13 +13,13 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     # Validate configuration
     config.validate_config()
-    
+
     # Create FastAPI app
     app = FastAPI(
         title=config.APP_TITLE,
         version=config.APP_VERSION
     )
-    
+
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
@@ -29,17 +29,17 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Register routes
     app.include_router(api_router)
-    
+
     # Lifespan events
     @app.on_event("startup")
     async def startup_event():
         """Initialize database connection and setup on startup."""
         # Initialize database pool
         db_pool.initialize(config.get_db_config())
-        
+
         # Setup database tables
         conn = get_conn()
         if conn:
@@ -50,15 +50,15 @@ def create_app() -> FastAPI:
                 print(f"Database setup error: {e}")
             finally:
                 put_conn(conn)
-        
+
         print("FastAPI started.")
-    
+
     @app.on_event("shutdown")
     async def shutdown_event():
         """Clean up database connections on shutdown."""
         db_pool.close_all()
         print("Application shutdown complete.")
-    
+
     return app
 
 

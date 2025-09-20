@@ -60,7 +60,7 @@ def check_cache(conn, claim_norm: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def upsert_result(conn, claim_norm: str, verdict: str, source_link: str, 
+def upsert_result(conn, claim_norm: str, verdict: str, source_link: str,
                   explanation: Optional[str] = None, evidence_json: Optional[Dict] = None) -> None:
     """Insert or update a fact-check result in the database."""
     if not conn:

@@ -59,19 +59,19 @@ def verify_claim(payload: VerifyRequest):
             ]
             evidence_bundle = EvidenceBundle(support=[], refute=[])
             return VerifyResponse(
-                verdict=verdict, 
+                verdict=verdict,
                 confidence=85,
                 explanation=cached.get("explanation") or "Cached result",
-                sources=sources, 
+                sources=sources,
                 evidence=evidence_bundle,
                 processing_time=elapsed
             )
-        
+
         # Search web
         search_data = search_claim(
-            claim, 
-            num=max_results, 
-            api_key=config.API_KEY, 
+            claim,
+            num=max_results,
+            api_key=config.API_KEY,
             search_engine_id=config.SEARCH_ENGINE_ID
         )
         if "error" in search_data:
@@ -104,7 +104,6 @@ def verify_claim(payload: VerifyRequest):
 
         # Per-URL evidence buckets
         per_url_ev = defaultdict(lambda: {"support": [], "refute": []})
-        
         for ev in entailing:
             u = get_evidence_url(ev)
             if u:

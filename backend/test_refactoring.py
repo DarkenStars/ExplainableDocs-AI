@@ -36,10 +36,10 @@ def test_file_structure():
         'app/routes/__init__.py',
         'app/routes/api.py',
     ]
-    
+
     print("Testing file structure and syntax:")
     all_valid = True
-    
+
     for file_path in expected_files:
         if os.path.exists(file_path):
             valid, error = validate_python_file(file_path)
@@ -51,7 +51,7 @@ def test_file_structure():
         else:
             print(f"❌ {file_path} - file missing")
             all_valid = False
-    
+
     return all_valid
 
 def test_basic_imports():
@@ -60,26 +60,26 @@ def test_basic_imports():
         # Test configuration without loading environment variables
         import sys
         sys.path.insert(0, '.')
-        
+
         # Test basic module structure by checking if files can be parsed
         from app.config import Config
         print("✓ Configuration class imported")
-        
+
         # Test utility functions
         from app.utils.helpers import normalize_claim, truncate_text
         print("✓ Utility functions imported")
-        
+
         # Test basic functionality
         normalized = normalize_claim("  Test   Claim  ")
         assert normalized == "test claim", f"Expected 'test claim', got '{normalized}'"
-        
+
         truncated = truncate_text("Hello World", 5)
         assert truncated == "Hello", f"Expected 'Hello', got '{truncated}'"
-        
+
         print("✓ Basic utility functions work correctly")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Import test failed: {e}")
         return False
@@ -88,10 +88,10 @@ if __name__ == "__main__":
     print("=" * 60)
     print("TESTING MODULAR REFACTORING")
     print("=" * 60)
-    
+
     structure_valid = test_file_structure()
     imports_valid = test_basic_imports()
-    
+
     print("\n" + "=" * 60)
     if structure_valid and imports_valid:
         print("✅ REFACTORING VALIDATION SUCCESSFUL!")

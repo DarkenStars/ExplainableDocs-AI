@@ -7,7 +7,7 @@ import psycopg2
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 from ml_models import select_evidence_from_urls
-from text_polisher import polish_text 
+from text_polisher import polish_text
 
 
 # Config and other functions...
@@ -135,7 +135,7 @@ def build_explanation(claim: str, entailing, contradicting):
         evidence_snippets = [f"\"{ev['sentence']}\"" for ev in contradicting[:3]]
         all_evidence_text = " ".join(evidence_snippets)
         return f"Regarding the claim, the {trend}. For example, key sources state that {all_evidence_text}"
-        
+
     # Evidence is strongly supporting.
     elif len(entailing) >= 2 and len(entailing) >= len(contradicting) + 1:
         trend = f"the evidence tends to support the claim that '{claim}'"
@@ -143,7 +143,7 @@ def build_explanation(claim: str, entailing, contradicting):
         evidence_snippets = [f"\"{ev['sentence']}\"" for ev in entailing[:3]]
         all_evidence_text = " ".join(evidence_snippets)
         return f"In reference to the claim, {trend}. For instance, relevant sources mention that {all_evidence_text}"
-    
+
     # Evidence is mixed or inconclusive. Show both sides.
     else:
         # Get the top supporting and refuting snippets, if they exist.
@@ -152,9 +152,9 @@ def build_explanation(claim: str, entailing, contradicting):
 
         if top_support and top_refute:
             return f"The evidence regarding '{claim}' is mixed. For example, one source supports it by stating {top_support}, while another refutes it, mentioning {top_refute}."
-        elif top_support: 
+        elif top_support:
              return f"The evidence regarding '{claim}' is inconclusive but leans supportive, with one source stating {top_support}."
-        elif top_refute: 
+        elif top_refute:
              return f"The evidence regarding '{claim}' is inconclusive but leans negative, with one source mentioning {top_refute}."
         else:
              return f"The evidence regarding the claim '{claim}' is inconclusive based on a review of the top online sources."
@@ -177,7 +177,7 @@ def main():
             raw = input("\nEnter a claim to verify (or 'exit'): ").strip()
             if raw.lower() == "exit": break
             if not raw: continue
-            
+
             claim_norm = normalize_claim(raw)
 
             cached = check_cache(db, claim_norm)
@@ -194,7 +194,7 @@ def main():
             if "error" in search_data:
                 print(f"Error: {search_data['error']}")
                 continue
-            
+
             results = search_data.get("results", [])
             print("\n--- Top Sources Found ---")
             if not results: print("No sources found.")
@@ -219,7 +219,7 @@ def main():
 
             # Build the structured explanation
             structured_explanation = build_explanation(raw, entailing, contradicting)
-            
+
             # Polish the text to make it sound more natural
             print("\nPolishing language...")
             polished_explanation = polish_text(structured_explanation)
@@ -227,7 +227,7 @@ def main():
             print("\n--- Explanation ---")
             print(polished_explanation)
             print("-------------------")
-            
+
             # Store the single, polished explanation in the database
             top_link = results[0].get("link") if results else "No link found."
             evidence_payload = {"entailing": entailing, "contradicting": contradicting, "heuristic": heuristic}

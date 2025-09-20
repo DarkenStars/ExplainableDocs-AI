@@ -16,13 +16,13 @@ def get_evidence_url(evidence: Dict[str, Any]) -> str:
 def calculate_confidence(final_verdict: str, entailing: List[Dict], contradicting: List[Dict]) -> int:
     """Calculate confidence score based on verdict and evidence strength."""
     confidence = 75
-    
+
     if final_verdict in ["true", "false"]:
         confidence = 90
-    
+
     if len(entailing) >= 2 or len(contradicting) >= 2:
         confidence = min(95, confidence + 10)
-    
+
     return confidence
 
 

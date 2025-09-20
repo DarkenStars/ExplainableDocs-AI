@@ -23,14 +23,14 @@ def resolve_verify_url() -> str:
     base = (explicit or api).rstrip("/")
     if not base.endswith("/verify"):
         base = base + "/verify"
-    print(f"[bot] Using verify endpoint: {base}")  
+    print(f"[bot] Using verify endpoint: {base}")
     return base
 
 # ---- Config ----
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  
-INTERNAL_VERIFY_URL = resolve_verify_url()    
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+INTERNAL_VERIFY_URL = resolve_verify_url()
 TG_MAX_SOURCES = int(os.getenv("TG_MAX_SOURCES", "5"))
-TG_TEXT_LIMIT = int(os.getenv("TG_TEXT_LIMIT", "4000"))  
+TG_TEXT_LIMIT = int(os.getenv("TG_TEXT_LIMIT", "4000"))
 
 # ----------------- Utilities -----------------
 def _chunk(text: str, limit: int = TG_TEXT_LIMIT) -> List[str]:
@@ -71,7 +71,7 @@ def _format_reply(data: Dict[str, Any]) -> str:
     lines.append("\nSend another claim to check.")
     return "\n".join(lines)
 
-# Handlers 
+# Handlers
 async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Hi! Send me any claim and I’ll fact-check it for you.\n\n"
@@ -111,7 +111,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     for part in _chunk(reply):
         await update.message.reply_text(part)
 
-# App lifecycle 
+# App lifecycle
 async def _post_init(app: Application) -> None:
     # Create one shared AsyncClient for all requests
     app.bot_data["http_client"] = httpx.AsyncClient(follow_redirects=True)

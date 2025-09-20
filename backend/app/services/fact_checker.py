@@ -13,12 +13,12 @@ def search_claim(query: str, num: int = 10, api_key: str = None, search_engine_i
         return {"error": "Configuration Error: Please set API_KEY."}
     if not search_engine_id:
         return {"error": "Configuration Error: Please set SEARCH_ENGINE_ID."}
-    
+
     num = max(1, min(int(num or 10), 10))  # Google CSE max per call = 10
 
     url = "https://www.googleapis.com/customsearch/v1"
     params = {"key": api_key, "cx": search_engine_id, "q": query, "num": num}
-    
+
     try:
         resp = requests.get(url, params=params, timeout=12)
         resp.raise_for_status()
@@ -37,11 +37,11 @@ def analyze_verdicts_improved(search_results: List[Dict]) -> Dict[str, Any]:
 
     # Keywords with weights. Using more specific, powerful words is key.
     supporting_keywords = {
-        'confirmed': 3, 'verified': 3, 'accurate': 3, 'fact-check: true': 4, 
+        'confirmed': 3, 'verified': 3, 'accurate': 3, 'fact-check: true': 4,
         'correct': 2, 'evidence': 1
     }
     refuting_keywords = {
-        'hoax': 3, 'false': 3, 'debunked': 3, 'myth': 3, 'fact-check: false': 4, 
+        'hoax': 3, 'false': 3, 'debunked': 3, 'myth': 3, 'fact-check: false': 4,
         'incorrect': 2, 'misleading': 2, 'baseless': 1
     }
     negation_words = {'not', 'isnt', 'is not', 'aint', 'not verified', 'not confirmed'}
@@ -55,14 +55,14 @@ def analyze_verdicts_improved(search_results: List[Dict]) -> Dict[str, Any]:
         'factcheck.org': 1.5,
     }
     default_weight = 1.0
-    
+
     support_score = 0
     refute_score = 0
 
     for item in search_results:
         text = f"{item.get('title', '')} {item.get('snippet', '')}".lower()
         source_url = item.get('source', '')
-        
+
         # Determine the weight for the current source
         item_weight = default_weight
         for domain, weight in source_weights.items():
@@ -82,7 +82,7 @@ def analyze_verdicts_improved(search_results: List[Dict]) -> Dict[str, Any]:
                     if f"{neg} {keyword}" in text:
                         is_negated = True
                         break
-                
+
                 if is_negated:
                     # If "not true", add to refute score instead
                     refute_score += (weight * len(matches) * item_weight)
@@ -102,7 +102,7 @@ def analyze_verdicts_improved(search_results: List[Dict]) -> Dict[str, Any]:
     # Calculate percentages
     s_pct = round((support_score / total_score) * 100)
     f_pct = round((refute_score / total_score) * 100)
-    
+
     # Improvement 4: A more decisive threshold
     # Verdict is 'false' if refute score is at least double the support score
     if refute_score >= support_score * 2:
@@ -112,7 +112,7 @@ def analyze_verdicts_improved(search_results: List[Dict]) -> Dict[str, Any]:
         best = "true"
     else:
         best = "uncertain"
-        
+
     return {"best_verdict": best, "percentages": {"true": s_pct, "false": f_pct}}
 
 
@@ -120,7 +120,7 @@ def build_explanation(claim: str, entailing: List[Dict], contradicting: List[Dic
     """Build an explanation based on evidence found."""
     if not entailing and not contradicting:
         return f"After reviewing top sources, no strong evidence was found to either support or refute the claim about '{claim}'."
-    
+
     if len(contradicting) >= 2 and len(contradicting) >= len(entailing) + 1:
         evidence_snippets = [f'"{ev.get("sentence", "")}"' for ev in contradicting[:2]]
         return f"Evidence strongly suggests the claim about '{claim}' is false. Key sources state: {' '.join(evidence_snippets)}"
@@ -134,12 +134,12 @@ def build_explanation(claim: str, entailing: List[Dict], contradicting: List[Dic
 def simple_fuse_verdict(heuristic_best_verdict: str, entailing: List[Dict], contradicting: List[Dict]) -> str:
     """Fuse heuristic verdict with ML evidence to get final verdict."""
     e, c = len(entailing), len(contradicting)
-    
+
     if e >= 2 and e >= c + 1:
         return "true"
     if c >= 2 and c >= e + 1:
         return "false"
-    
+
     return heuristic_best_verdict
 
 

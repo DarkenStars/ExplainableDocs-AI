@@ -74,7 +74,7 @@ def select_evidence_from_urls(claim: str, urls):
         text = _fetch_clean(url)
         if not text or len(text) < 400:
             continue
-        
+
         sents = _sentences(text)
         ranked = _rank_by_similarity(claim, sents, PER_URL_CANDIDATES)
         cand_sents = [s for s, _ in ranked]
@@ -85,7 +85,7 @@ def select_evidence_from_urls(claim: str, urls):
             lbl, score, sent = pred["label"], pred["score"], pred["sentence"]
             sim = float(cand_sim.get(sent, 0.0))
             rec = {"url": url, "sentence": sent, "sim": sim, "nli_score": score}
-            
+
             if lbl == "ENTAILMENT" and score >= ENTAIL_THRESHOLD:
                 entailing.append(rec)
             elif lbl == "CONTRADICTION" and score >= CONTRA_THRESHOLD:
