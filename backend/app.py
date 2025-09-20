@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import re 
 from collections import defaultdict
 from typing import List, Optional
 
@@ -12,7 +13,7 @@ from pydantic import BaseModel
 # typing.Literal (py>=3.8); if older, install typing_extensions and switch import
 try:
     from typing import Literal
-except Exception:  # pragma: no cover
+except Exception:  
     from typing_extensions import Literal  # type: ignore
 
 # DB
@@ -177,38 +178,86 @@ def search_claim(query: str, num: int = 10):
     except Exception as e:
         return {"error": f"Search API error: {e}"}
 
-def analyze_verdicts(search_results):
+def analyze_verdicts_improved(search_results):
+    """
+    Analyzes search results with improved accuracy by using whole word matching,
+    counting keyword frequency, handling basic negation, and weighting sources.
+    """
     if not search_results:
         return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0, "uncertain": 100}}
-    supporting_keywords = {
-        'confirmed': 3, 'true': 3, 'accurate': 3, 'verified': 3,
-        'fact': 2, 'correct': 2, 'supported': 1, 'evidence': 1
+
+    # Keywords with weights. Using more specific, powerful words is key.
+    supporting_keywords = {'confirmed': 3, 'verified': 3, 'accurate': 3, 'fact-check: true': 4, 'correct': 2, 'evidence': 1}
+    refuting_keywords = {'hoax': 3, 'false': 3, 'debunked': 3, 'myth': 3, 'fact-check: false': 4, 'incorrect': 2, 'misleading': 2, 'baseless': 1}
+    negation_words = {'not', 'isnt', 'is not', 'aint', 'not verified', 'not confirmed'}
+
+    # Weight results from more reliable sources higher
+    source_weights = {
+        'reuters.com': 1.5,
+        'apnews.com': 1.5,
+        'snopes.com': 1.5,
+        'politifact.com': 1.5,
+        'factcheck.org': 1.5,
     }
-    refuting_keywords = {
-        'hoax': 3, 'false': 3, 'debunked': 3, 'myth': 3,
-        'conspiracy': 2, 'incorrect': 2, 'misleading': 2,
-        'unproven': 1, 'baseless': 1, 'scam': 2
-    }
-    support_score = refute_score = 0
+    default_weight = 1.0
+    
+    support_score = 0
+    refute_score = 0
+
     for item in search_results:
         text = f"{item.get('title','')} {item.get('snippet','')}".lower()
-        for k, w in supporting_keywords.items():
-            if k in text:
-                support_score += w
-        for k, w in refuting_keywords.items():
-            if k in text:
-                refute_score += w
-    total = support_score + refute_score
-    if total == 0:
+        source_url = item.get('source', '')
+        
+        # Determine the weight for the current source
+        item_weight = default_weight
+        for domain, weight in source_weights.items():
+            if domain in source_url:
+                item_weight = weight
+                break # Stop after finding the first match
+
+        # Count keyword occurrences instead of just presence
+        # Use regex for whole word matching (\b)
+        for keyword, weight in supporting_keywords.items():
+            # Use regex to find whole words only
+            matches = re.findall(r'\b' + re.escape(keyword) + r'\b', text)
+            if matches:
+                # Basic negation check
+                is_negated = False
+                for neg in negation_words:
+                    if f"{neg} {keyword}" in text:
+                        is_negated = True
+                        break
+                
+                if is_negated:
+                    # If "not true", add to refute score instead
+                    refute_score += (weight * len(matches) * item_weight)
+                else:
+                    support_score += (weight * len(matches) * item_weight)
+
+        for keyword, weight in refuting_keywords.items():
+            matches = re.findall(r'\b' + re.escape(keyword) + r'\b', text)
+            if matches:
+                # No need to check for negation on refuting keywords
+                refute_score += (weight * len(matches) * item_weight)
+
+    total_score = support_score + refute_score
+    if total_score == 0:
         return {"best_verdict": "uncertain", "percentages": {"true": 0, "false": 0, "uncertain": 100}}
-    s_pct = round((support_score / total) * 100)
-    f_pct = round((refute_score / total) * 100)
-    if refute_score > support_score * 1.5:
+
+    # Calculate percentages
+    s_pct = round((support_score / total_score) * 100)
+    f_pct = round((refute_score / total_score) * 100)
+    
+    # Improvement 4: A more decisive threshold
+    # Verdict is 'false' if refute score is at least double the support score
+    if refute_score >= support_score * 2:
         best = "false"
-    elif support_score > refute_score * 1.5:
+    # Verdict is 'true' if support score is at least double the refute score
+    elif support_score >= refute_score * 2:
         best = "true"
     else:
         best = "uncertain"
+        
     return {"best_verdict": best, "percentages": {"true": s_pct, "false": f_pct}}
 
 def build_explanation(claim, entailing, contradicting):

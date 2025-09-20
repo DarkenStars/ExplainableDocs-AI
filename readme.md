@@ -120,17 +120,6 @@ The system follows a modular, data-driven architecture that combines web scrapin
 
 ---
 
-## Contributors
-
-This project is developed by a passionate team dedicated to combating misinformation:
-
-- [**Saksham Pahariya**](https://github.com/sakshampahariya)
-- [**Mehul Batham**](https://github.com/github2002-cpu)
-- [**Yathartha Jain**](https://github.com/whiteshadowcoder)
-- [**Vasant Kumar Mogia**](https://github.com/DSCmatter)
-
----
-
 ### Installation Guide
 
 ### Backend Setup
@@ -180,7 +169,6 @@ This project is developed by a passionate team dedicated to combating misinforma
     ```bash
     python app.py # to run FastAPI 
     ```
-    
 
 ### Frontend Setup
 
@@ -223,6 +211,26 @@ This project is developed by a passionate team dedicated to combating misinforma
     npm run lint
     
     ```
+## Run the bot
+
+ ```bash
+ RUN `python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload`
+
+ RUN `python .\bot_tele.py`
+
+ RUN BACKEND
+`python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload` --> for bot and frontend
+```
+using `start.ps1`:
+```ps1
+Set-Location backend
+
+.venv\Scripts\Activate.ps1
+
+Start-Process powershell -ArgumentList "python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload"
+python .\bot_tele.py
+```
+```
 ---
 
 ### License
